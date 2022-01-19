@@ -2,12 +2,11 @@
 # See Wordle at https://www.powerlanguage.co.uk/wordle/
 
 import std/[strutils,re]
-# import re
 
 # Word source: https://github.com/dwyl/english-words/
 const filename = "words_alpha.txt"
 const wordsource = staticRead(filename) # Compiles with txt file
-const test_regex = false # set to true to print regex stuff for testing
+const test_regex = false # Compile set to true to print regex stuff for testing
 const word_length = 6 # 5 chars + return char
 
 var knownPositions = [".",".",".",".","."] # Set default to "." to help with regex
@@ -47,14 +46,12 @@ proc looseLetterRegex(n: seq[string]): string =
 # Generate regex string for known bad positions
 proc badPositionRegex(n: array[5,string]): string =
     var regexStr: string
-    var i = 0
     for position in n:
         var tempStr = position
         if tempStr == ".":
             regexStr.add(tempStr)
         else:
             regexStr.add("[^" & tempStr & "]")
-        inc i
     result = regexStr
 
 # Check if all good characters are contained in a word
@@ -71,7 +68,6 @@ proc looseLetterCheck(n: string): bool =
 # Match regex expressions against word list to get possible solutions
 proc runRegex(wordlist: seq[string], knownGoodPositions, knownBadPositions, badLetters: Regex): seq[string] =
     var options: seq[string]
-    #var letterCount = 0
     for word in wordlist:
         if word.match(knownGoodPositions) and
         word.match(knownBadPositions) and
@@ -102,6 +98,9 @@ proc getInput(): bool =
             else:
                 echo "**discarding " & line & "***"
             inc linecount
+        if response_result == "yyyyy":
+            echo "\n\"" & response & "\""
+            quit()
         if response.len == char_limit and response_result.len == char_limit:
             loop = false
         else:
@@ -120,7 +119,7 @@ proc getInput(): bool =
             if badPositions[i] == ".":
                 badPositions[i] = tempStr
             else:
-                badPositions[i].add("|"&tempStr)
+                badPositions[i].add("|" & tempStr)
         elif r == 'n':
             var tempStr = $response[i]
             if not knownPositions.contains(tempStr) and
@@ -129,9 +128,8 @@ proc getInput(): bool =
             elif badPositions[i] == ".":
                 badPositions[i] = tempStr
             else:
-                badPositions[i].add("|"&tempStr)
+                badPositions[i].add("|" & tempStr)
         inc i
-    # echo knownPositions
     return true
  
 when isMainModule:
@@ -143,7 +141,7 @@ when isMainModule:
         var knownGoodRegex = knownPositionRegex(knownPositions)
         var knownBadRegex = badPositionRegex(badPositions)
         var badLetterRegex = looseLetterRegex(badLetters)
-        when test_regex:
+        when test_regex: # Print regex info if compiled as true
             var goodLetterRegex = looseLetterRegex(goodLetters)
             echo "knownGood regex: " & knownGoodRegex
             echo "knownBad regex: " & knownBadRegex
@@ -154,5 +152,8 @@ when isMainModule:
             echo "goodLetters.len: " & $goodLetters.len
             echo "press enter to continue"
             discard readLine(stdin)
+        let output = runRegex(wordlist, re(knownGoodRegex), re(knownBadRegex), re(badLetterRegex)) # Convert regex strings to Regex types
         echo ""
-        echo runRegex(wordlist, re(knownGoodRegex), re(knownBadRegex), re(badLetterRegex)) # Convert regex strings to Regex types
+        echo output
+        if output.len == 1:
+            quit()
